@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Employee Sign Up{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card mt-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-person-plus"></i> Create Employee Account
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    {{ form|crispy }}
+
+                    <div class="form-group mt-4">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-person-check"></i> Sign Up
+                        </button>
+                    </div>
+                </form>
+
+                <div class="mt-3 text-center">
+                    <p class="mb-0">Already have an account?</p>
+                    <a href="{% url 'login' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-box-arrow-in-right"></i> Login Here
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
