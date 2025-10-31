@@ -3,48 +3,201 @@
 {% block title %}My Leave Requests{% endblock %}
 
 {% block content %}
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5>My Leave Requests</h5>
-        <a href="{% url 'leave-create' %}" class="btn btn-success">
-            <i class="bi bi-plus-circle"></i> New Request
+<div class="container mx-auto px-4 py-6">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-800 flex items-center">
+            <i class="fas fa-list mr-2"></i>My Leave Requests
+        </h1>
+        <a href="{% url 'leave-create' %}" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center transition duration-200">
+            <i class="fas fa-plus mr-1"></i>Apply for Leave
         </a>
     </div>
-    <div class="card-body">
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Type</th>
-                    <th>Dates</th>
-                    <th>Days</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for leave in object_list %}
-                <tr>
-                    <td>{{ leave.leave_type.name }}</td>
-                    <td>{{ leave.start_date|date:"M d, Y" }} - {{ leave.end_date|date:"M d, Y" }}</td>
-                    <td>{{ leave.duration }}</td>
-                    <td>
-                        <span class="badge bg-{% if leave.status == 'A' %}success{% elif leave.status == 'R' %}danger{% else %}warning{% endif %}">
-                            {{ leave.get_status_display }}
-                        </span>
-                    </td>
-                    <td>
-                        <a href="{% url 'leave-detail' leave.pk %}" class="btn btn-sm btn-info">
-                            View
-                        </a>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="5" class="text-center">No leave requests found</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+
+    <!-- Leave Balances Summary -->
+    {% if leave_balances %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+        {% for balance in leave_balances %}
+        <div class="bg-white rounded-lg shadow-md border-l-4 {% if balance.remaining_days <= 5 %}border-yellow-400{% else %}border-green-400{% endif %} p-4 h-full">
+            <div class="text-center">
+                <h6 class="font-semibold text-gray-700 mb-2">{{ balance.leave_type.name }}</h6>
+                <h3 class="text-3xl font-bold {% if balance.remaining_days <= 5 %}text-yellow-500{% else %}text-green-500{% endif %} mb-1">
+                    {{ balance.remaining_days }}
+                </h3>
+                <small class="text-gray-500 text-sm">days remaining</small>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Filters -->
+    <div class="bg-white rounded-lg shadow-md mb-6">
+        <div class="border-b border-gray-200 px-6 py-4">
+            <h6 class="font-semibold text-gray-800 flex items-center">
+                <i class="fas fa-filter mr-2"></i>Filter Leaves
+            </h6>
+        </div>
+        <div class="p-6">
+            <form method="get" class="grid grid-cols-1 md:grid-cols-6 gap-4">
+                <div class="md:col-span-2">
+                    <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <select name="status" id="status" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">All Statuses</option>
+                        {% for value, label in status_choices %}
+                            <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="md:col-span-2">
+                    <label for="leave_type" class="block text-sm font-medium text-gray-700 mb-1">Leave Type</label>
+                    <select name="leave_type" id="leave_type" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">All Types</option>
+                        {% for lt in leave_types %}
+                            <option value="{{ lt.id }}" {% if current_leave_type == lt.id|stringformat:"i" %}selected{% endif %}>
+                                {{ lt.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="md:col-span-2 flex items-end space-x-2">
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center transition duration-200">
+                        <i class="fas fa-search mr-1"></i>Apply Filters
+                    </button>
+                    <a href="{% url 'leave-list' %}" class="border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-md flex items-center transition duration-200">
+                        <i class="fas fa-times mr-1"></i>Clear
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Leave Requests Table -->
+    <div class="bg-white rounded-lg shadow-md">
+        <div class="border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+            <h5 class="font-semibold text-gray-800">Leave History</h5>
+            <span class="bg-gray-500 text-white px-2 py-1 rounded-full text-sm">{{ leaves.count }} request(s)</span>
+        </div>
+        
+        <div class="p-0">
+            {% if leaves %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Leave Type</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Applied On</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for leave in leaves %}
+                            <tr class="hover:bg-gray-50 transition duration-150">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="font-medium text-gray-900">{{ leave.leave_type.name }}</div>
+                                    {% if leave.reason %}
+                                    <div class="text-sm text-gray-500 mt-1">{{ leave.reason|truncatewords:5 }}</div>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ leave.start_date|date:"M d, Y" }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ leave.end_date|date:"M d, Y" }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">{{ leave.duration }} day(s)</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    {% if leave.status == 'P' %}
+                                        <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium">Pending</span>
+                                    {% elif leave.status == 'A' %}
+                                        <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">Approved</span>
+                                    {% elif leave.status == 'R' %}
+                                        <span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">Rejected</span>
+                                    {% elif leave.status == 'C' %}
+                                        <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs font-medium">Cancelled</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ leave.created_at|date:"M d, Y" }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <div class="flex space-x-1">
+                                        <a href="{% url 'leave-detail' leave.pk %}" class="text-blue-600 hover:text-blue-900 border border-blue-600 hover:bg-blue-50 rounded px-2 py-1 transition duration-200" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% if leave.status == 'P' %}
+                                            <a href="{% url 'leave-update' leave.pk %}" class="text-gray-600 hover:text-gray-900 border border-gray-600 hover:bg-gray-50 rounded px-2 py-1 transition duration-200" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'leave-delete' leave.pk %}" class="text-red-600 hover:text-red-900 border border-red-600 hover:bg-red-50 rounded px-2 py-1 transition duration-200" title="Cancel">
+                                                <i class="fas fa-times"></i>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-12">
+                    <i class="fas fa-inbox text-5xl text-gray-300 mb-4"></i>
+                    <h5 class="text-gray-500 text-lg font-medium mb-2">No leave requests found</h5>
+                    <p class="text-gray-400 mb-4">You haven't applied for any leave yet.</p>
+                    <a href="{% url 'leave-create' %}" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center justify-center w-64 mx-auto transition duration-200">
+                        <i class="fas fa-plus mr-1"></i>Apply for Your First Leave
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+        
+        {% if is_paginated %}
+        <div class="border-t border-gray-200 px-6 py-4">
+            <nav class="flex items-center justify-center">
+                <ul class="flex space-x-1">
+                    {% if page_obj.has_previous %}
+                        <li>
+                            <a href="?page=1" class="px-3 py-2 text-gray-500 hover:text-gray-700 border border-gray-300 rounded-l-md hover:bg-gray-50 transition duration-200">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-2 text-gray-500 hover:text-gray-700 border border-gray-300 hover:bg-gray-50 transition duration-200">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li>
+                                <span class="px-3 py-2 bg-blue-500 text-white border border-blue-500">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li>
+                                <a href="?page={{ num }}" class="px-3 py-2 text-gray-500 hover:text-gray-700 border border-gray-300 hover:bg-gray-50 transition duration-200">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li>
+                            <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-2 text-gray-500 hover:text-gray-700 border border-gray-300 hover:bg-gray-50 transition duration-200">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="?page={{ page_obj.paginator.num_pages }}" class="px-3 py-2 text-gray-500 hover:text-gray-700 border border-gray-300 rounded-r-md hover:bg-gray-50 transition duration-200">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

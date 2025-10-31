@@ -1,28 +1,216 @@
 {% extends 'base.html' %}
-{% load crispy_forms_tags %}
 
-{% block title %}{% if object %}Edit{% else %}New{% endif %} Leave Request{% endblock %}
+{% block title %}{% if form.instance.pk %}Edit{% else %}Apply for{% endif %} Leave{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h4>{% if object %}Edit{% else %}New{% endif %} Leave Request</h4>
+<div class="container mx-auto px-4 py-6">
+    <div class="flex justify-center">
+        <div class="w-full max-w-4xl">
+            <div class="bg-white rounded-lg shadow-md">
+                <div class="border-b border-gray-200 px-6 py-4">
+                    <h4 class="font-semibold text-gray-800 flex items-center">
+                        <i class="fas fa-{% if form.instance.pk %}edit{% else %}plus{% endif %} mr-2"></i>
+                        {% if form.instance.pk %}Edit Leave Request{% else %}Apply for Leave{% endif %}
+                    </h4>
+                </div>
+                <div class="p-6">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                                {% for error in form.non_field_errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="md:col-span-1">
+                                <div class="mb-4">
+                                    <label for="{{ form.leave_type.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                        Leave Type <span class="text-red-500">*</span>
+                                    </label>
+                                    {{ form.leave_type }}
+                                    {% if form.leave_type.errors %}
+                                        <div class="text-red-600 text-sm mt-1">
+                                            {% for error in form.leave_type.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="md:col-span-1">
+                                <div class="mb-4">
+                                    <label for="{{ form.start_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                        Start Date <span class="text-red-500">*</span>
+                                    </label>
+                                    {{ form.start_date }}
+                                    {% if form.start_date.errors %}
+                                        <div class="text-red-600 text-sm mt-1">
+                                            {% for error in form.start_date.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="md:col-span-1">
+                                <div class="mb-4">
+                                    <label for="{{ form.end_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                        End Date <span class="text-red-500">*</span>
+                                    </label>
+                                    {{ form.end_date }}
+                                    {% if form.end_date.errors %}
+                                        <div class="text-red-600 text-sm mt-1">
+                                            {% for error in form.end_date.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="{{ form.reason.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                Reason <span class="text-red-500">*</span>
+                            </label>
+                            {{ form.reason }}
+                            {% if form.reason.errors %}
+                                <div class="text-red-600 text-sm mt-1">
+                                    {% for error in form.reason.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="text-gray-500 text-sm mt-1">Please provide a detailed reason for your leave.</div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="md:col-span-1">
+                                <div class="mb-4">
+                                    <label for="{{ form.emergency_contact.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                        Emergency Contact
+                                    </label>
+                                    {{ form.emergency_contact }}
+                                    {% if form.emergency_contact.errors %}
+                                        <div class="text-red-600 text-sm mt-1">
+                                            {% for error in form.emergency_contact.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <div class="text-gray-500 text-sm mt-1">Person to contact in case of emergency</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-6">
+                            <label for="{{ form.address_during_leave.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                Address During Leave
+                            </label>
+                            {{ form.address_during_leave }}
+                            {% if form.address_during_leave.errors %}
+                                <div class="text-red-600 text-sm mt-1">
+                                    {% for error in form.address_during_leave.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="text-gray-500 text-sm mt-1">Your contact address during leave period (optional)</div>
+                        </div>
+
+                        <div class="flex justify-between pt-4 border-t border-gray-200">
+                            <a href="{% url 'leave-list' %}" class="border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-md flex items-center transition duration-200">
+                                <i class="fas fa-arrow-left mr-1"></i>Cancel
+                            </a>
+                            <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center transition duration-200">
+                                <i class="fas fa-{% if form.instance.pk %}save{% else %}paper-plane{% endif %} mr-1"></i>
+                                {% if form.instance.pk %}Update Request{% else %}Submit Application{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
-            <div class="card-body">
-                <form method="post">
-                    {% csrf_token %}
-                    {{ form|crispy }}
-                    <div class="mt-3">
-                        <button type="submit" class="btn btn-primary">
-                            {% if object %}Update{% else %}Submit{% endif %}
-                        </button>
-                        <a href="{% url 'leave-list' %}" class="btn btn-secondary">Cancel</a>
+
+            <!-- Leave Balances Card -->
+            {% if leave_balances %}
+            <div class="bg-white rounded-lg shadow-md mt-6">
+                <div class="border-b border-gray-200 px-6 py-4">
+                    <h5 class="font-semibold text-gray-800 flex items-center">
+                        <i class="fas fa-chart-bar mr-2"></i>Your Leave Balances
+                    </h5>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {% for balance in leave_balances %}
+                        <div class="bg-white rounded-lg border-l-4 {% if balance.remaining_days <= 5 %}border-yellow-400{% else %}border-green-400{% endif %} shadow-sm">
+                            <div class="text-center p-4">
+                                <h6 class="font-semibold text-gray-700 mb-2">{{ balance.leave_type.name }}</h6>
+                                <h4 class="text-2xl font-bold {% if balance.remaining_days <= 5 %}text-yellow-500{% else %}text-green-500{% endif %} mb-1">
+                                    {{ balance.remaining_days }}
+                                </h4>
+                                <small class="text-gray-500 text-sm">days remaining</small>
+                            </div>
+                        </div>
+                        {% endfor %}
                     </div>
-                </form>
+                </div>
             </div>
+            {% endif %}
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add Tailwind classes to form fields
+        const inputs = document.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            if (!input.classList.contains('btn')) {
+                input.classList.add('w-full', 'px-3', 'py-2', 'border', 'border-gray-300', 'rounded-md', 'shadow-sm', 'focus:outline-none', 'focus:ring-blue-500', 'focus:border-blue-500');
+            }
+        });
+
+        // Calculate and display duration
+        function calculateDuration() {
+            const startDate = document.getElementById('{{ form.start_date.id_for_label }}');
+            const endDate = document.getElementById('{{ form.end_date.id_for_label }}');
+            
+            if (startDate.value && endDate.value) {
+                const start = new Date(startDate.value);
+                const end = new Date(endDate.value);
+                const duration = Math.floor((end - start) / (1000 * 60 * 60 * 24)) + 1;
+                
+                // Show duration warning
+                if (duration > 0) {
+                    let durationElement = document.getElementById('duration-display');
+                    if (!durationElement) {
+                        durationElement = document.createElement('div');
+                        durationElement.id = 'duration-display';
+                        durationElement.className = 'bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mt-2';
+                        endDate.parentNode.appendChild(durationElement);
+                    }
+                    durationElement.innerHTML = `<strong>Duration:</strong> ${duration} day(s)`;
+                }
+            }
+        }
+
+        // Add event listeners for date changes
+        const startDateField = document.getElementById('{{ form.start_date.id_for_label }}');
+        const endDateField = document.getElementById('{{ form.end_date.id_for_label }}');
+        
+        if (startDateField && endDateField) {
+            startDateField.addEventListener('change', calculateDuration);
+            endDateField.addEventListener('change', calculateDuration);
+        }
+    });
+</script>
 {% endblock %}

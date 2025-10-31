@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}Cancel Leave Request{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <div class="flex justify-center">
+        <div class="w-full max-w-2xl">
+            <div class="bg-white rounded-lg shadow-md">
+                <div class="bg-yellow-500 rounded-t-lg px-6 py-4">
+                    <h4 class="font-semibold text-white flex items-center">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>Cancel Leave Request
+                    </h4>
+                </div>
+                <div class="p-6 text-center">
+                    <div class="mb-6">
+                        <i class="fas fa-trash-alt text-5xl text-yellow-500 mb-4"></i>
+                        <h5 class="text-lg font-medium text-gray-800">Are you sure you want to cancel this leave request?</h5>
+                    </div>
+                    
+                    <div class="bg-white border border-gray-200 rounded-lg shadow-sm mb-6">
+                        <div class="p-4 text-left">
+                            <p class="mb-2"><strong class="text-gray-700">Leave Type:</strong> {{ object.leave_type.name }}</p>
+                            <p class="mb-2"><strong class="text-gray-700">Duration:</strong> {{ object.start_date|date:"M d, Y" }} to {{ object.end_date|date:"M d, Y" }} ({{ object.duration }} days)</p>
+                            <p class="mb-0"><strong class="text-gray-700">Reason:</strong> {{ object.reason|truncatewords:20 }}</p>
+                        </div>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="flex justify-center space-x-4">
+                            <a href="{% url 'leave-detail' object.pk %}" class="border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-md flex items-center transition duration-200">
+                                <i class="fas fa-arrow-left mr-1"></i>Go Back
+                            </a>
+                            <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md flex items-center transition duration-200">
+                                <i class="fas fa-times mr-1"></i>Yes, Cancel Request
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
