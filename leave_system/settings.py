@@ -51,11 +51,27 @@ INSTALLED_APPS = [
     'api',
     'accounts.apps.AccountsConfig',
 ]
+# Email Configuration
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'okellojared050@gmail.com'  # Your Gmail
+EMAIL_HOST_PASSWORD = 'kmdy tdez gjja eohw'  # Use Gmail App Password (NOT regular password)
+DEFAULT_FROM_EMAIL = 'okellojared050@gmail.com'
+SERVER_EMAIL = 'okellojared050@gmail.com'
 
-# Add this AFTER INSTALLED_APPS
+# For development - fallback to console email backend
+#import os
+#if os.environ.get('DEBUG', 'True') == 'True':
+ #   EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# Authentication Settings
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'leave-list'
+LOGOUT_REDIRECT_URL = 'login'
+
 # Custom User Model
 AUTH_USER_MODEL = 'accounts.CustomUser'
-
 
 # Crispy Forms Configuration
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
@@ -143,12 +159,12 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 
 # Email Settings (add this after STATIC files config)
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.getenv('EMAIL_USER')  # Set in .env file
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_PASS')  # Set in .env file
+#EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+#EMAIL_HOST = 'smtp.gmail.com'
+#EMAIL_PORT = 587
+#EMAIL_USE_TLS = True
+#EMAIL_HOST_USER = os.getenv('EMAIL_USER')  # Set in .env file
+#EMAIL_HOST_PASSWORD = os.getenv('EMAIL_PASS')  # Set in .env file
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
