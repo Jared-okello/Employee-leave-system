@@ -56,10 +56,10 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'okellojared050@gmail.com'  # Your Gmail
-EMAIL_HOST_PASSWORD = 'kmdy tdez gjja eohw'  # Use Gmail App Password (NOT regular password)
-DEFAULT_FROM_EMAIL = 'okellojared050@gmail.com'
-SERVER_EMAIL = 'okellojared050@gmail.com'
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER") # Your Gmail
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')  # Use Gmail App Password (NOT regular password)
+DEFAULT_FROM_EMAIL = f"Employee Leave System <{EMAIL_HOST_USER}>"
+SERVER_EMAIL = EMAIL_HOST_USER
 
 # For development - fallback to console email backend
 #import os
