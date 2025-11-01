@@ -44,18 +44,15 @@ INSTALLED_APPS = [
     'accounts.apps.AccountsConfig',
 ]
 
-# Email Configuration
-if DEBUG:
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-else:
-    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
-    EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
-    EMAIL_USE_TLS = True
-    EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'okellojared050@gmail.com')
-    EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
-    DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
-    SERVER_EMAIL = os.environ.get('SERVER_EMAIL', EMAIL_HOST_USER)
+# Email Configuration - UPDATED
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'  # Always use SMTP
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'okellojared050@gmail.com')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
+SERVER_EMAIL = os.environ.get('SERVER_EMAIL', EMAIL_HOST_USER)
 
 # Authentication Settings
 LOGIN_URL = 'login'

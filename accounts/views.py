@@ -91,7 +91,7 @@ Thank you!
 The {current_site.name} Team
             """
             
-            # HTML message
+            # HTML message - FIXED: Use current_site.name instead of undefined variable
             html_message = f"""
 <!DOCTYPE html>
 <html>
@@ -112,7 +112,7 @@ The {current_site.name} Team
         </div>
         <div class="content">
             <p>Hi <strong>{user.username}</strong>,</p>
-            <p>Welcome to <strong>{Employee_Leave_System}</strong>!</p>
+            <p>Welcome to <strong>{current_site.name}</strong>!</p>
             <p>Please verify your email address by clicking the button below:</p>
             <p style="text-align: center;">
                 <a href="{verification_url}" class="button">Verify Email Address</a>
