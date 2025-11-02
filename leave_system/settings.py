@@ -6,7 +6,8 @@ import os
 import dj_database_url
 from pathlib import Path
 from dotenv import load_dotenv
-
+from django.core.exceptions import ImproperlyConfigured
+# Load environment variables from .env file
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -44,16 +45,27 @@ INSTALLED_APPS = [
     'accounts.apps.AccountsConfig',
 ]
 
-# Email Configuration - UPDATED
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'  # Always use SMTP
-EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
-EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'okellojared050@gmail.com')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
-DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
-SERVER_EMAIL = os.environ.get('SERVER_EMAIL', EMAIL_HOST_USER)
+# Email configuration
+EMAIL_BACKEND = os.environ.get(
+    "EMAIL_BACKEND",
+    "django.core.mail.backends.console.EmailBackend" if DEBUG else "django.core.mail.backends.smtp.EmailBackend"
+)
 
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", 587))
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") == "True"
+EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", "False") == "True"
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")  # required in prod
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")  # required in prod
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER)
+SERVER_EMAIL = os.environ.get("SERVER_EMAIL", DEFAULT_FROM_EMAIL)
+EMAIL_TIMEOUT = int(os.environ.get("EMAIL_TIMEOUT", 10))
+
+# Fail fast in production if credentials are missing
+#if not DEBUG:
+    #if not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD:
+      #  raise ImproperlyConfigured("Set EMAIL_HOST_USER and EMAIL_HOST_PASSWORD in the environment for production (Render).")
+# ...existing code...
 # Authentication Settings
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'leave-list'
