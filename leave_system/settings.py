@@ -108,8 +108,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'leave_system.wsgi.application'
 
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+# Database: default to sqlite for local dev, use DATABASE_URL in production if provided
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -117,13 +116,19 @@ DATABASES = {
     }
 }
 
-# Use PostgreSQL on Render
-if not DEBUG:
-    DATABASES['default'] = dj_database_url.config(
-        default=os.environ.get('DATABASE_URL'),
+# Prefer an explicit DATABASE_URL in production (e.g. Postgres on Render)
+db_url = os.environ.get('DATABASE_URL')
+if db_url:
+    DATABASES['default'] = dj_database_url.parse(
+        db_url,
         conn_max_age=600,
         conn_health_checks=True,
     )
+else:
+    if not DEBUG:
+        raise ImproperlyConfigured(
+            "DATABASE_URL environment variable is not set. Set it on Render (use a Postgres database) or provide DATABASE_URL."
+        )
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
