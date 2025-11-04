@@ -116,16 +116,38 @@ DATABASES = {
     }
 }
 
-# Use PostgreSQL only if DATABASE_URL is properly set
-DATABASE_URL = os.environ.get('DATABASE_URL')
-if DATABASE_URL and DATABASE_URL.startswith('postgres://'):
-    # Convert postgres:// to postgresql://
-    DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
-    DATABASES['default'] = dj_database_url.config(
-        default=DATABASE_URL,
-        conn_max_age=600,
-        conn_health_checks=True,
-    )
+# ...existing code...
+# Database: default to sqlite for local dev, allow DATABASE_URL (including sqlite) if provided
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+
+db_url = os.environ.get('DATABASE_URL')
+if db_url:
+    if db_url.startswith('sqlite'):
+        # Force using the project sqlite file (ignore any query params like sslmode)
+        DATABASES['default'] = {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    else:
+        parsed = dj_database_url.parse(
+            db_url,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
+        # Remove OPTIONS for sqlite (sqlite3.connect doesn't accept sslmode etc.)
+        if parsed.get('ENGINE', '').endswith('sqlite3'):
+            parsed.pop('OPTIONS', None)
+        DATABASES['default'] = parsed
+else:
+    if not DEBUG:
+        raise ImproperlyConfigured(
+            "DATABASE_URL environment variable is not set. To use sqlite in production, set DATABASE_URL=sqlite:///db.sqlite3"
+        )
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
