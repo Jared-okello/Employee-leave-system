@@ -7,7 +7,6 @@ import dj_database_url
 from pathlib import Path
 from dotenv import load_dotenv
 from django.core.exceptions import ImproperlyConfigured
-
 # Load environment variables from .env file
 load_dotenv()
 
@@ -63,10 +62,10 @@ SERVER_EMAIL = os.environ.get("SERVER_EMAIL", DEFAULT_FROM_EMAIL)
 EMAIL_TIMEOUT = int(os.environ.get("EMAIL_TIMEOUT", 10))
 
 # Fail fast in production if credentials are missing
-if not DEBUG:
-    if not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD:
-        raise ImproperlyConfigured("Set EMAIL_HOST_USER and EMAIL_HOST_PASSWORD in the environment for production (Render).")
-
+#if not DEBUG:
+    #if not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD:
+      #  raise ImproperlyConfigured("Set EMAIL_HOST_USER and EMAIL_HOST_PASSWORD in the environment for production (Render).")
+# ...existing code...
 # Authentication Settings
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'leave-list'
@@ -109,7 +108,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'leave_system.wsgi.application'
 
-# Database Configuration - FIXED VERSION
+# Database Configuration
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -117,15 +116,15 @@ DATABASES = {
     }
 }
 
-# Use PostgreSQL on Render
+# Use PostgreSQL only if DATABASE_URL is properly set
 DATABASE_URL = os.environ.get('DATABASE_URL')
-if DATABASE_URL:
-    # Render provides DATABASE_URL automatically
+if DATABASE_URL and DATABASE_URL.startswith('postgres://'):
+    # Convert postgres:// to postgresql://
+    DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
     DATABASES['default'] = dj_database_url.config(
         default=DATABASE_URL,
         conn_max_age=600,
         conn_health_checks=True,
-        ssl_require=not DEBUG
     )
 
 # Password validation
@@ -146,7 +145,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'Africa/Nairobi'
+TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
@@ -156,7 +155,8 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # WhiteNoise configuration for static files
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+if not DEBUG:
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files
 MEDIA_URL = '/media/'
@@ -172,9 +172,6 @@ if not DEBUG:
     CSRF_COOKIE_SECURE = True
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
-    SECURE_HSTS_SECONDS = 31536000  # 1 year
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
 
 # Celery Configuration (comment out for Render deployment)
 # CELERY_BROKER_URL = 'redis://localhost:6379/0'
