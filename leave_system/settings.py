@@ -7,6 +7,7 @@ import dj_database_url
 from pathlib import Path
 from dotenv import load_dotenv
 from django.core.exceptions import ImproperlyConfigured
+
 # Load environment variables from .env file
 load_dotenv()
 
@@ -19,12 +20,24 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-e-su957gprbe@)^43e!zb
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+# Allowed hosts configuration
+ALLOWED_HOSTS = [
+    'employee-leave-system.onrender.com',
+    'localhost',
+    '127.0.0.1',
+    '.onrender.com'
+]
 
 # Add Render host automatically
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+
+# CSRF Trusted Origins - CRITICAL for Render
+CSRF_TRUSTED_ORIGINS = [
+    'https://employee-leave-system.onrender.com',
+    'https://*.onrender.com',
+]
 
 # Application definition
 INSTALLED_APPS = [
@@ -45,25 +58,24 @@ INSTALLED_APPS = [
     'accounts.apps.AccountsConfig',
 ]
 
-# Email configuration for Render deployment
+# Email configuration for Gmail + App Password
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
-EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
-EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')  # Your Gmail address
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')  # Gmail App Password
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
-
-# Add email timeout for better error handling
 EMAIL_TIMEOUT = 30
 
-# If no email credentials are provided, use console backend as fallback
+# Fallback to console backend if email credentials are missing
 if not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-    print("Warning: Email credentials not set. Using console backend.")
+    print("EMAIL: Using console backend. Set EMAIL_HOST_USER and EMAIL_HOST_PASSWORD for Gmail SMTP.")
+
 # Authentication Settings
-LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'leave-list'
+LOGIN_URL = '/accounts/login/'
+LOGIN_REDIRECT_URL = 'leave-list'  # Make sure this URL name exists in your urls.py
 LOGOUT_REDIRECT_URL = 'login'
 
 # Custom User Model
@@ -74,8 +86,9 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # Add this for static files
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -93,6 +106,7 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
@@ -111,38 +125,10 @@ DATABASES = {
     }
 }
 
-# ...existing code...
-# Database: default to sqlite for local dev, allow DATABASE_URL (including sqlite) if provided
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
-
-db_url = os.environ.get('DATABASE_URL')
-if db_url:
-    if db_url.startswith('sqlite'):
-        # Force using the project sqlite file (ignore any query params like sslmode)
-        DATABASES['default'] = {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    else:
-        parsed = dj_database_url.parse(
-            db_url,
-            conn_max_age=600,
-            conn_health_checks=True,
-        )
-        # Remove OPTIONS for sqlite (sqlite3.connect doesn't accept sslmode etc.)
-        if parsed.get('ENGINE', '').endswith('sqlite3'):
-            parsed.pop('OPTIONS', None)
-        DATABASES['default'] = parsed
-else:
-    if not DEBUG:
-        raise ImproperlyConfigured(
-            "DATABASE_URL environment variable is not set. To use sqlite in production, set DATABASE_URL=sqlite:///db.sqlite3"
-        )
+# Use DATABASE_URL if provided (for PostgreSQL on Render)
+DATABASE_URL = os.environ.get('DATABASE_URL')
+if DATABASE_URL:
+    DATABASES['default'] = dj_database_url.parse(DATABASE_URL, conn_max_age=600)
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -189,24 +175,56 @@ if not DEBUG:
     CSRF_COOKIE_SECURE = True
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
 
-# Celery Configuration (comment out for Render deployment)
-# CELERY_BROKER_URL = 'redis://localhost:6379/0'
-# CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
-# CELERY_ACCEPT_CONTENT = ['json']
-# CELERY_TASK_SERIALIZER = 'json'
+# Django REST Framework
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+}
+
+# CORS settings
+CORS_ALLOWED_ORIGINS = [
+    "https://employee-leave-system.onrender.com",
+]
+
+CORS_ALLOW_CREDENTIALS = True
+
+# Celery Configuration (comment out for Render deployment if not using Redis)
+# CELERY_BROKER_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+# CELERY_RESULT_BACKEND = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
 
 # Logging configuration
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+    },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
         },
     },
     'root': {
         'handlers': ['console'],
-        'level': 'WARNING',
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
     },
 }
